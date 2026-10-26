@@ -1,0 +1,16 @@
+{
+  "name": "falcon-typing",
+  "version": "1.0.1",
+  "description": "Shared primitive-types and FFI-boundary library for the Falcon DSL ecosystem",
+  "homepage": "https://github.com/falcon-autotuning/falcon-typing",
+  "license": "MPL-2.0",
+  "dependencies": [
+    {
+      "name": "falcon-typing"
+    },
+    {
+      "name": "gtest",
+      "version>=": "1.16.0"
+    }
+  ]
+}
