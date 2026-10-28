@@ -47,8 +47,8 @@ endif()
 # Core library
 add_library(
   peak-finding
-    SHARED
-      src/peak-finding.cpp
+  STATIC
+    third_party/peak-finding.cpp
 )
 
 set_target_properties(
@@ -57,15 +57,10 @@ set_target_properties(
       POSITION_INDEPENDENT_CODE ON
 )
 
-# Add version information
-target_link_libraries(
-  peak-finding
-)
-
 target_include_directories(
   peak-finding
   PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party>
     $<INSTALL_INTERFACE:include>
 )
 
@@ -90,11 +85,10 @@ install(TARGETS peak-finding
 )
 
 install(
-  DIRECTORY include/peak-finding
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  DIRECTORY third_party/FindPeaks/
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/peak-finding
   FILES_MATCHING
     PATTERN "*.hpp"
-    PATTERN "*.h"
 )
 
 install(EXPORT peak-finding-targets
@@ -107,4 +101,14 @@ install(FILES
   "${CMAKE_CURRENT_BINARY_DIR}/peak-finding-config.cmake"
   "${CMAKE_CURRENT_BINARY_DIR}/peak-finding-config-version.cmake"
   DESTINATION ${CMAKE_INSTALL_DATADIR}/peak-finding
+)
+
+install(
+  FILES LICENSE
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/peak-finding
+)
+
+install(
+  FILES third_party/FindPeaks/LICENSE
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/peak-finding/third_party
 )

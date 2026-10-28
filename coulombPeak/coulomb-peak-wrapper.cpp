@@ -1,4 +1,4 @@
-#include "peak-finding/peak-finding.hpp"
+#include "peak-finding.hpp"
 #include <falcon-core/math/Quantity.hpp>
 #include <falcon-core/math/arrays/LabelledControlArray.hpp>
 #include <falcon-core/math/arrays/LabelledMeasuredArray.hpp>
