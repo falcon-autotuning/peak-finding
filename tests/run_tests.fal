@@ -1,6 +1,6 @@
 import (
   "github.com/falcon-autotuning/std-lib@v1.2.2/collections/array"
-  "github.com/falcon-autotuning/std-lib@v1.2.2/falconCore/math/arrays/farray"
+  "github.com/falcon-autotuning/std-lib@v1.2.2/falconCore/generic/farray"
   "github.com/falcon-autotuning/std-lib@v1.2.2/falconCore/math/arrays/labelledMeasuredArray"
   "github.com/falcon-autotuning/std-lib@v1.2.2/falconCore/math/arrays/labelledControlArray"
   "../coulombPeak/coulombPeak.fal"
