@@ -1,0 +1,229 @@
+import (
+  "github.com/falcon-autotuning/std-lib@v1.2.2/collections/array"
+  "github.com/falcon-autotuning/std-lib@v1.2.2/falconCore/math/arrays/farray"
+  "github.com/falcon-autotuning/std-lib@v1.2.2/falconCore/math/arrays/labelledMeasuredArray"
+  "github.com/falcon-autotuning/std-lib@v1.2.2/falconCore/math/arrays/labelledControlArray"
+  "../coulombPeak/coulombPeak.fal"
+)
+
+
+struct PeakTestHelpers {
+
+    routine ControlArrayFromFloats (
+        array::Array<float> values
+    ) -> (labelledControlArray::LabelledControlArray arr) {
+
+        farray::FArray f =
+            farray::FArrayTestHelpers.NewFromFloats(values);
+
+        arr = labelledControlArray::LabelledControlArray.New(f);
+    }
+
+    routine MeasuredArrayFromFloats (
+        array::Array<float> values
+    ) -> (labelledMeasuredArray::LabelledMeasuredArray arr) {
+
+        farray::FArray f =
+            farray::FArrayTestHelpers.NewFromFloats(values);
+
+        arr = labelledMeasuredArray::LabelledMeasuredArray.New(f);
+    }
+}
+
+autotuner AnalyticalEvaluationTests -> (int passed, int failed) {
+    passed = 0; failed = 0;
+    start -> __init;
+
+    state test_single_peak (TestRunner runner, TestContext t) {
+
+        Array<float> x = Array.New();
+        x.PushBack(0.0);
+        x.PushBack(1.0);
+        x.PushBack(2.0);
+        x.PushBack(3.0);
+        x.PushBack(4.0);
+
+        Array<float> y = Array.New();
+        y.PushBack(0.0);
+        y.PushBack(1.0);
+        y.PushBack(10.0);
+        y.PushBack(1.0);
+        y.PushBack(0.0);
+
+        LabelledControlArray controls =
+            PeakTestHelpers.ControlArrayFromFloats(x);
+
+        LabelledMeasuredArray measured =
+            PeakTestHelpers.MeasuredArrayFromFloats(y);
+
+        Array<Quantity> peaks =
+            HardCodedPeakFit(controls, measured);
+
+        Error err =
+            t.ExpectEq(1, peaks.Size(),
+                "Should find exactly one peak");
+
+        err =
+            t.ExpectFloatEq(
+                2.0,
+                peaks.At(0).Value(),
+                0.001,
+                "Peak should occur at x=2"
+            );
+
+        -> __end(runner, t);
+    }
+
+    state test_two_peaks (TestRunner runner, TestContext t) {
+
+        Array<float> x = Array.New();
+        x.PushBack(0.0);
+        x.PushBack(1.0);
+        x.PushBack(2.0);
+        x.PushBack(3.0);
+        x.PushBack(4.0);
+        x.PushBack(5.0);
+        x.PushBack(6.0);
+        x.PushBack(7.0);
+        x.PushBack(8.0);
+        x.PushBack(9.0);
+
+        Array<float> y = Array.New();
+        y.PushBack(0.0);
+        y.PushBack(0.0);
+        y.PushBack(5.0);
+        y.PushBack(0.0);
+        y.PushBack(0.0);
+        y.PushBack(0.0);
+        y.PushBack(0.0);
+        y.PushBack(0.0);
+        y.PushBack(8.0);
+        y.PushBack(0.0);
+
+        LabelledControlArray controls =
+            PeakTestHelpers.ControlArrayFromFloats(x);
+
+        LabelledMeasuredArray measured =
+            PeakTestHelpers.MeasuredArrayFromFloats(y);
+
+        Array<Quantity> peaks =
+            HardCodedPeakFit(controls, measured);
+
+        Error err =
+            t.ExpectEq(2, peaks.Size(),
+                "Should find two peaks");
+
+        err =
+            t.ExpectFloatEq(
+                2.0,
+                peaks.At(0).Value(),
+                0.001,
+                "First peak should be at x=2"
+            );
+
+        err =
+            t.ExpectFloatEq(
+                8.0,
+                peaks.At(1).Value(),
+                0.001,
+                "Second peak should be at x=8"
+            );
+
+        -> __end(runner, t);
+    }
+
+    state test_flat_signal (TestRunner runner, TestContext t) {
+
+        Array<float> x = Array.New();
+        x.PushBack(0.0);
+        x.PushBack(1.0);
+        x.PushBack(2.0);
+        x.PushBack(3.0);
+        x.PushBack(4.0);
+
+        Array<float> y = Array.New();
+        y.PushBack(1.0);
+        y.PushBack(1.0);
+        y.PushBack(1.0);
+        y.PushBack(1.0);
+        y.PushBack(1.0);
+
+        LabelledControlArray controls =
+            PeakTestHelpers.ControlArrayFromFloats(x);
+
+        LabelledMeasuredArray measured =
+            PeakTestHelpers.MeasuredArrayFromFloats(y);
+
+        Array<Quantity> peaks =
+            HardCodedPeakFit(controls, measured);
+
+        Error err =
+            t.ExpectEq(
+                0,
+                peaks.Size(),
+                "Flat trace should contain no peaks"
+            );
+
+        -> __end(runner, t);
+    }
+
+    state test_periodic_peaks (TestRunner runner, TestContext t) {
+
+        Array<float> x = Array.New();
+        x.PushBack(0.0);
+        x.PushBack(1.0);
+        x.PushBack(2.0);
+        x.PushBack(3.0);
+        x.PushBack(4.0);
+        x.PushBack(5.0);
+        x.PushBack(6.0);
+        x.PushBack(7.0);
+        x.PushBack(8.0);
+        x.PushBack(9.0);
+
+        Array<float> y = Array.New();
+        y.PushBack(0.0);
+        y.PushBack(1.0);
+        y.PushBack(8.0);
+        y.PushBack(1.0);
+        y.PushBack(0.0);
+
+        y.PushBack(0.0);
+        y.PushBack(1.0);
+        y.PushBack(9.0);
+        y.PushBack(1.0);
+        y.PushBack(0.0);
+
+        LabelledControlArray controls =
+            PeakTestHelpers.ControlArrayFromFloats(x);
+
+        LabelledMeasuredArray measured =
+            PeakTestHelpers.MeasuredArrayFromFloats(y);
+
+        Array<Quantity> peaks =
+            HardCodedPeakFit(controls, measured);
+
+        Error err = t.ExpectEq(
+            2,
+            peaks.Size(),
+            "Two Coulomb peaks should be identified"
+        );
+
+        err = t.ExpectFloatEq(
+            2.0,
+            peaks.At(0).Value(),
+            0.001,
+            "First peak should be at 2"
+        );
+
+        err = t.ExpectFloatEq(
+            7.0,
+            peaks.At(1).Value(),
+            0.001,
+            "Second peak should be at 7"
+        );
+
+        -> __end(runner, t);
+    }
+}
+
