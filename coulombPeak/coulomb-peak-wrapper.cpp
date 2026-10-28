@@ -39,12 +39,13 @@ void HardCodedPeakFit(const FalconParamEntry *params, int32_t param_count,
   auto xarray = get_opaque<LabelledControlArray>(params, param_count, "xarray");
   auto yarray =
       get_opaque<LabelledMeasuredArray>(params, param_count, "yarray");
+  auto raw_xarray = xarray->data();
+  std::vector<double> vec(raw_xarray.begin(), raw_xarray.end());
 
   PeakConditions conditions;
   conditions.set_prominence(0.01);
   conditions.set_distance(2);
-  std::vector<peak_result_t> peaks =
-      find_peaks(yarray->data().data(), conditions);
+  std::vector<peak_result_t> peaks = find_peaks(vec, conditions);
 
   std::vector<RuntimeValue> elements;
   if (!peaks.empty()) {
