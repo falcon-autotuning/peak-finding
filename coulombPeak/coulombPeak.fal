@@ -1,0 +1,12 @@
+import (
+  "github.com/falcon-autotuning/std-lib@v1.2.2/collections/array"
+  "github.com/falcon-autotuning/std-lib@v1.2.2/falconCore/math/quantity"
+  "github.com/falcon-autotuning/std-lib@v1.2.2/falconCore/math/arrays/labelledMeasuredArray"
+  "github.com/falcon-autotuning/std-lib@v1.2.2/falconCore/math/arrays/labelledControlArray"
+)
+
+ffimport "coulomb-peak-wrapper.cpp" ("-I/opt/falcon/include/") ("-L/opt/falcon/lib" "-lfalcon_core_cpp")
+
+// Initial implementation hardcoding the analysis and building an array of locations of the peaks
+routine HardCodedPeakFit (labelledcontrolarray::LabelledControlArray xarray,labelledmeasuredArray::LabelledMeasuredArray yarray) -> (array::Array<quantity::Quantity> voltages)
+

@@ -1,0 +1,17 @@
+name: coulombPeak
+version: 0.0.1
+maintainer: Falcon Team
+github: falcon-autotuning/peak-finding
+license: MPL-2.0
+ffi:
+  build/coulomb-peak-wrapper.so:
+dependencies:
+  - name: labelledMeasuredArray
+    version: 1.2.4
+    github: github.com/falcon-autotuning/std-lib/falconCore/math/arrays/labelledMeasuredArray
+  - name: quantity
+    version: 1.2.4
+    github: github.com/falcon-autotuning/std-lib/falconCore/math/quantity
+  - name: array
+    version: 1.2.4
+    github: github.com/falcon-autotuning/std-lib/collections/array

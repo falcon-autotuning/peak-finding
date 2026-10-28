@@ -1,51 +1,69 @@
-.PHONY: help configure build test install clean vcpkg-bootstrap
+.PHONY: help configure build test test-cpp test-fal update-hashes archive release clean vcpkg-bootstrap
 
-# Detect the preset from CMAKE_PRESET environment variable or default to linux-clang-release
+VERSION := 0.0.1 
+PKG_NAME := coulombPeak 
+REPO_NAME := peak-finding 
+SO_NAME := build/coulomb-peak-wrapper.so
+FAL_FILE := coulombPeak/coulombPeak.fal
+YML_FILE := coulombPeak/falcon.yml
+TARBALL := $(PKG_NAME)-$(VERSION).tar.gz
+RELEASE_TARBALL := $(REPO_NAME).tar.gz
+
 PRESET ?= linux-clang-release
-CMAKE_BUILD_DIR := build/$(PRESET)
+VCPKG_DIR ?= $(CURDIR)/vcpkg_installed/x64-linux-dynamic
+FALCON_PREFIX ?= /opt/falcon
 
-help:
-	@echo "peak-finding Build System"
-	@echo "========================"
+help: ## Show available targets
+	@echo "Falcon peak finding Package"
+	@echo "==================="
+	@echo "Version: $(VERSION)"
 	@echo ""
-	@echo "Available presets:"
-	@cmake --list-presets=all
-	@echo ""
-	@echo "Usage:"
-	@echo "  make configure PRESET=<preset>  - Configure build (default: $(PRESET))"
-	@echo "  make build PRESET=<preset>      - Build (default: $(PRESET))"
-	@echo "  make test PRESET=<preset>       - Run tests (default: $(PRESET))"
-	@echo "  make install PRESET=<preset>    - Install to /opt/falcon"
-	@echo "  make clean                      - Clean all build artifacts"
-	@echo ""
-	@echo "Examples:"
-	@echo "  make build                                      # Build with clang (default)"
-	@echo "  make build PRESET=linux-gcc-release             # Build with gcc"
-	@echo "  make install PRESET=linux-gcc-release           # Install gcc build"
-	@echo ""
-	@echo "Or use cmake directly:"
-	@echo "  cmake --preset linux-clang-release"
-	@echo "  cmake --build --preset linux-clang-release"
-	@echo "  ctest --preset linux-clang-release"
+	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-20s %s\n", $$1, $$2}'
 
-vcpkg-bootstrap:
+vcpkg-bootstrap: ## Bootstrap vcpkg and install dependencies
 	@echo "Bootstrapping vcpkg..."
 	MAKELEVEL=0 cmake -P cmake/bootstrap/bootstrap-vcpkg.cmake
 
-configure: vcpkg-bootstrap
+configure: vcpkg-bootstrap ## Configure CMake with preset
 	@echo "Configuring $(PRESET)..."
-	cmake --preset $(PRESET)
+	MAKELEVEL=0 cmake --preset $(PRESET)
 
-build: configure
+all: build ## Build wrapper and shared library
+
+build: configure ## Build shared library and FFI wrapper using CMake
 	@echo "Building $(PRESET)..."
 	cmake --build --preset $(PRESET)
 
-install: build
-	@echo "Installing $(PRESET) to /opt/falcon..."
-	cmake --install $(CMAKE_BUILD_DIR) --prefix /opt/falcon
+test-cpp: build ## Run C++ unit tests
+	@cd build/$(PRESET) && ctest --output-on-failure
 
-clean:
-	@echo "Cleaning all build artifacts..."
-	rm -rf build vcpkg_installed
+test-fal: build ## Run Falcon DSL tests
+	@cd tests && LD_LIBRARY_PATH=$(CURDIR)/build/$(PRESET):$(CURDIR)/build:$(VCPKG_DIR)/lib:$(FALCON_PREFIX)/lib:$$LD_LIBRARY_PATH \
+	$(VCPKG_DIR)/bin/falcon-test ./run_tests.fal --log-level info
+
+test: test-cpp test-fal ## Run all tests (C++ unit tests and Falcon DSL tests)
+
+update-hashes: build ## Update SHA-256 hash in falcon.yml
+	@python3 -c "import hashlib, re, os; \
+	h = hashlib.sha256(open('$(SO_NAME)', 'rb').read()).hexdigest(); \
+	content = open('$(YML_FILE)').read(); \
+	content = re.sub(r'$(SO_NAME): sha256:[a-f0-9]+', '$(SO_NAME): sha256:' + h, content); \
+	open('$(YML_FILE)', 'w').write(content); \
+	print(f'  ✓ Updated $(SO_NAME): sha256:{h}')"
+
+archive: update-hashes ## Create versioned package tarball
+	@mkdir -p dist
+	tar -czvf dist/$(TARBALL) $(YML_FILE) $(FAL_FILE) $(SO_NAME) README.md
+	@echo "✓ Created dist/$(TARBALL)"
+
+release: update-hashes ## Prepare falcon-pm release artifacts (both versioned and canonical repo tarballs)
+	@mkdir -p dist
+	tar -czvf dist/$(TARBALL) $(YML_FILE) $(FAL_FILE) $(SO_NAME) README.md
+	@cp -f dist/$(TARBALL) dist/$(RELEASE_TARBALL)
+	@echo "✓ Release artifacts ready in dist/:"
+	@echo "  - dist/$(TARBALL) (versioned release package)"
+	@echo "  - dist/$(RELEASE_TARBALL) (falcon-pm GitHub release asset)"
+
+clean: ## Remove build artifacts
+	rm -rf build vcpkg_installed dist .falcon
 	@echo "✓ Clean complete"
-

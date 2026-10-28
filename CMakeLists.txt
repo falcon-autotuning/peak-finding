@@ -43,7 +43,6 @@ if(USE_CCACHE)
   endif()
 endif()
 
-#find_package(falcon-typing CONFIG REQUIRED)
 
 # Core library
 add_library(
@@ -58,14 +57,9 @@ set_target_properties(
       POSITION_INDEPENDENT_CODE ON
 )
 
-#target_compile_definitions(peak-finding)
-
 # Add version information
-#target_compile_definitions(peak-finding)
 target_link_libraries(
   peak-finding
-#  PUBLIC
-#    falcon-typing::falcon-typing
 )
 
 target_include_directories(
@@ -74,6 +68,8 @@ target_include_directories(
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
+
+add_subdirectory(coulombPeak)
 
 # Tests
 if(BUILD_TESTS)
